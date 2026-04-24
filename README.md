@@ -8,7 +8,7 @@ The system is divided into three distinct layers:
 
 1.  **The Architect (Selene):** An OpenClaw agent that interprets high-level user requests, validates them against strict Pydantic schemas, and dispatches them as missions.
 2.  **The Gateway (FastMCP):** A high-performance bridge (`src/server.py`) that provides tools for the agent to communicate with the orchestration layer.
-3.  **The Orchestrator (Prefect):** A background engine (`src/flows/storytelling.py`) that manages the execution lifecycle, retries, and artifact generation.
+3.  **The Orchestrator (Prefect):** A background engine (`src/flows/storytelling.py`) that manages the execution lifecycle, retries, and artifact generation, backed by a **PostgreSQL** database.
 
 ---
 
@@ -17,7 +17,9 @@ The system is divided into three distinct layers:
 To run Chrono on any operating system (Linux, macOS, or Windows), you need:
 
 -   **Python 3.10+**
+-   **Docker** (For the PostgreSQL database)
 -   **Prefect 3.0+** (Orchestration server and worker)
+-   **asyncpg** (PostgreSQL driver for Python)
 -   **Pydantic** (Data validation)
 -   **FastMCP** (MCP tool server)
 -   **OpenClaw** (Agent framework)
@@ -26,7 +28,19 @@ To run Chrono on any operating system (Linux, macOS, or Windows), you need:
 
 ## 🚀 Setup & Installation
 
-### 1. Initialize Environment
+### 1. Initialize Database
+Chrono uses PostgreSQL for its orchestration backend. Initialize the container using Docker:
+
+```bash
+docker run --name chrono-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=prefect \
+  -p 5432:5432 \
+  -d postgres
+```
+
+### 2. Initialize Environment
 Run the setup script (Linux/macOS) or follow the steps manually:
 
 ```bash
@@ -39,16 +53,23 @@ chmod +x setup_and_test.sh
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windows: .\venv\Scripts\activate
-pip install prefect pydantic fastmcp
+pip install prefect pydantic fastmcp asyncpg
 mkdir -p src/schemas src/flows src/tools inbox processing completed missions
 ```
 
-### 2. Start Services
-You need three background processes running:
+---
 
-1.  **Prefect Server:** `prefect server start` (Dashboard: http://127.0.0.1:4200)
-2.  **Prefect Worker:** `prefect worker start --pool workpool`
-3.  **Chrono Controller (MCP):** `python src/server.py`
+## ⚡ Quick Start (Linux/i3)
+
+The project includes a `launch.sh` script that automatically verifies the database status and starts all necessary services (Prefect Server, Worker, and Controller).
+
+**From Terminal:**
+```bash
+./launch.sh
+```
+
+**From i3 Bar:**
+Look for the `🕒 Chrono` icon in the top right bar to launch the system with a single click.
 
 ---
 
@@ -73,9 +94,10 @@ Chrono uses a file-based "Inbox" workflow for maximum controllability:
 -   `missions/`: Final production outputs.
 
 ### Development Guidelines
+-   **PostgreSQL Backend:** Database connection is managed via `PREFECT_API_DATABASE_CONNECTION_URL` in `launch.sh`.
 -   **Object-Oriented Flows:** Keep flows modular by wrapping logic in classes (see `StorytellingFlow`).
 -   **Strict Schema Mapping:** Tools in `server.py` must accept Pydantic models directly to ensure the agent cannot pass malformed data.
--   **Cross-Platform Paths:** Always use Python's `pathlib` for file operations to ensure compatibility between Linux and Windows.
+-   **Cross-Platform Paths:** Always use Python's `pathlib` for file operations.
 
 ---
 

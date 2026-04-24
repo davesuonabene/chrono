@@ -18,17 +18,35 @@ else
     exit 1
 fi
 
-# 2. Configure Prefect for Maximum SQLite Stability
-# Increase timeout to 60s and disable thread checking for async compatibility
-export PREFECT_API_DATABASE_CONNECTION_URL="sqlite+aiosqlite:///${HOME}/.prefect/prefect.db?check_same_thread=False&timeout=60"
+# 2. Ensure PostgreSQL Container is Running
+echo "🐘 Checking PostgreSQL container (chrono-postgres)..."
+if [ "$(docker ps -aq -f name=chrono-postgres)" ]; then
+    if [ ! "$(docker ps -q -f name=chrono-postgres)" ]; then
+        echo "🔄 Starting existing chrono-postgres container..."
+        docker start chrono-postgres
+    else
+        echo "✅ chrono-postgres is already running."
+    fi
+else
+    echo "🏗️ Creating and starting new chrono-postgres container..."
+    docker run --name chrono-postgres \
+      -e POSTGRES_USER=postgres \
+      -e POSTGRES_PASSWORD=postgres \
+      -e POSTGRES_DB=prefect \
+      -p 5432:5432 \
+      -d postgres
+fi
+
+# 3. Configure Prefect Database Connection
+export PREFECT_API_DATABASE_CONNECTION_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/prefect"
 
 echo "🚀 Launching Chrono Enterprise AI Orchestrator..."
 
-# 3. Start Prefect Server (Wait longer for it to be fully ready)
+# 4. Start Prefect Server (Wait longer for it to be fully ready)
 echo "📡 Starting Prefect Server..."
 prefect server start &
 PREFECT_SERVER_PID=$!
-sleep 12 
+sleep 15 
 
 # 4. Start Prefect Worker
 echo "👷 Starting Prefect Worker (pool: workpool)..."
