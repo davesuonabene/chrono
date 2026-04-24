@@ -1,41 +1,26 @@
-from typing import List, Optional
-from datetime import datetime, timezone
 from pydantic import BaseModel, Field
+from typing import Optional, List
 
-# --- STORYTELLING DEPARTMENT ---
+class BeatPublishRequest(BaseModel):
+    audio_path: str = Field(..., description="Path to the audio file")
+    image_path: str = Field(..., description="Path to the background image")
+    title: str = Field(..., description="Title of the beat/video")
+    description: Optional[str] = Field("", description="Description for YouTube")
+    tags: List[str] = Field(default_factory=list, description="YouTube tags")
 
-class StoryTopic(BaseModel):
-    topic_name: str
-    target_audience: str
+class TaskResult(BaseModel):
+    """Base generic task result to satisfy strict type constraints"""
+    success: bool
+    error_message: Optional[str] = None
 
-class MissionRequest(BaseModel):
-    mission_id: str
-    topics: List[StoryTopic]
+class RenderTaskResult(TaskResult):
+    video_path: Optional[str] = None
 
-class MissionResult(BaseModel):
-    status: str
-    output_path: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+class UploadTaskResult(TaskResult):
+    youtube_id: Optional[str] = None
 
-# --- RESEARCH DEPARTMENT ---
-
-class ResearchTopic(BaseModel):
-    query: str
-    depth: str = "standard"  # e.g., "standard", "deep", "technical"
-
-class ResearchRequest(BaseModel):
-    mission_id: str
-    research_topics: List[ResearchTopic]
-
-class ResearchResult(BaseModel):
-    status: str
-    data: str  # The aggregated findings
-    output_path: Optional[str] = None
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-if __name__ == "__main__":
-    # Test the new Research structures
-    topic = ResearchTopic(query="Prefect 3.0 SQLite locking", depth="deep")
-    request = ResearchRequest(mission_id="res-001", research_topics=[topic])
-    print("Research Models Validated!")
-    print(request.model_dump_json(indent=2))
+class PublishingResult(BaseModel):
+    status: str = Field(..., description="Overall status of the publishing pipeline")
+    video_path: Optional[str] = Field(None, description="Path to the rendered video")
+    youtube_id: Optional[str] = Field(None, description="YouTube video ID if published successfully")
+    error_message: Optional[str] = Field(None, description="Error message if failed")
