@@ -1,4 +1,5 @@
 import re
+import ollama
 from pathlib import Path
 from prefect import task, flow
 from prefect.artifacts import create_markdown_artifact
@@ -10,15 +11,19 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 @task(name="generate_draft", description="Generates a story draft for a specific topic.")
 def generate_draft(topic: StoryTopic) -> str:
     """
-    Generates content for a given story topic.
+    Generates content for a given story topic using local AI.
     """
-    draft = (
-        f"## Topic: {topic.topic_name}\n\n"
-        f"**Target Audience:** {topic.target_audience}\n\n"
-        f"This is the story draft discussing **{topic.topic_name}**, "
-        f"specifically written for **{topic.target_audience}**.\n\n"
-    )
-    return draft
+    prompt = f"Write a professional story draft about {topic.topic_name} specifically for {topic.target_audience}. Use Markdown formatting."
+    
+    response = ollama.chat(model='qwen2.5-coder:3b', messages=[
+        {
+            'role': 'user',
+            'content': prompt,
+        },
+    ])
+    
+    content = response['message']['content']
+    return f"## Topic: {topic.topic_name}\n\n{content}\n\n"
 
 class StorytellingFlow:
     """

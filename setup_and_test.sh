@@ -23,8 +23,9 @@ PREFECT_PID=$!
 # Wait a few seconds for the server to spin up
 sleep 10
 
-# Build and apply the deployment
+# Build and apply the deployments
 prefect deploy src/flows/storytelling.py:write_chronicle -n chrono-story-v1
+prefect deploy src/flows/research.py:gather_context -n chrono-research-v1
 
 # Execute a dry-run test using the Prefect CLI
 prefect deployment run write_chronicle/chrono-story-v1 --params '{"request": {"mission_id": "dry-run-001", "topics": [{"topic_name": "Prefect Orchestration", "target_audience": "Engineers"}]}}'
