@@ -72,10 +72,10 @@ sleep 3
 
 # 7. Start FastMCP Chrono Controller
 echo "🏗️  Starting FastMCP Chrono Controller..."
-export PYTHONPATH=$PYTHONPATH:.
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 python src/server.py &
 CHRONO_CONTROLLER_PID=$!
-sleep 2
+sleep 5
 
 echo "=========================================================="
 echo "✅ All systems are online!"
@@ -83,3 +83,7 @@ echo "----------------------------------------------------------"
 echo "📊 Dashboard: http://127.0.0.1:4200"
 echo "=========================================================="
 echo "PIDs: Server:$PREFECT_SERVER_PID | Worker:$PREFECT_WORKER_PID | Controller:$CHRONO_CONTROLLER_PID"
+echo "👀 Monitoring logs (Close terminal to stop)..."
+
+# Keep the terminal open and wait for the controller process
+wait $CHRONO_CONTROLLER_PID

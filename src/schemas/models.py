@@ -24,3 +24,10 @@ class PublishingResult(BaseModel):
     video_path: Optional[str] = Field(None, description="Path to the rendered video")
     youtube_id: Optional[str] = Field(None, description="YouTube video ID if published successfully")
     error_message: Optional[str] = Field(None, description="Error message if failed")
+
+class BeatPreparationResult(BaseModel):
+    beat_id: str
+    audio_path: str
+    image_path: str
+    suggested_title: str
+    is_ready_for_dispatch: bool
